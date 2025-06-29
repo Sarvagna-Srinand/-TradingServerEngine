@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package trading;
+
+service TradingEngine {
+  rpc AddOrder (OrderRequest) returns (TradeResponse);
+  rpc CancelOrder (CancelOrderRequest) returns (CancelOrderResponse);
+  rpc ModifyOrder (ModifyOrderRequest) returns (TradeResponse);
+  rpc GetOrderbook (OrderbookRequest) returns (OrderbookResponse);
+}
+
+enum OrderType {
+  ORDER_TYPE_UNSPECIFIED = 0;
+  GOOD_TILL_CANCEL = 1;
+  FILL_AND_KILL = 2;
+  FILL_OR_KILL = 3;
+  GOOD_FOR_DAY = 4;
+  MARKET = 5;
+}
+
+enum Side {
+  SIDE_UNSPECIFIED = 0;
+  BUY = 1;
+  SELL = 2;
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ACCEPTED = 1;
+  REJECTED = 2;
+  FILLED = 3;
+  PARTIALLY_FILLED = 4;
+  CANCELLED = 5;
+  PENDING_NEW = 6;
+  SUSPENDED = 7;
+  TRIGGERED = 8;
+}
+
+message OrderRequest {
+  uint64 order_id = 1;  // Changed from string to uint64
+  string client_id = 2;
+  Side side = 3;
+  double price = 4;
+  int64 quantity = 5;
+  OrderType order_type = 6;
+  double stop_price = 7;  // For stop orders
+  int64 display_quantity = 8;  // For iceberg orders
+  int64 timestamp = 9;  // Client timestamp
+  string instrument_id = 10;
+}
+
+message TradeResponse {
+  uint64 order_id = 1;  // Changed from string to uint64
+  OrderStatus status = 2;
+  string reject_reason = 3;
+  repeated TradeInfo trades = 4;
+  int64 timestamp = 5;  // Server timestamp
+  double avg_fill_price = 6;
+  int64 remaining_quantity = 7;
+}
+
+message CancelOrderRequest {
+  uint64 order_id = 1;  // Changed from string to uint64
+  string client_id = 2;
+}
+
+message ModifyOrderRequest {
+  uint64 order_id = 1;  // Changed from string to uint64
+  string client_id = 2;
+  Side side = 3;
+  double new_price = 4;
+  int64 new_quantity = 5;
+}
+
+message TradeInfo {
+  uint64 order_id = 1;  // Changed from string to uint64
+  double price = 2;
+  int64 quantity = 3;
+  int64 timestamp = 4;
+  Side side = 5;
+  string counterparty_id = 6;
+  string instrument_id = 7;
+  string trade_id = 8;
+  double fee = 9;
+}
+
+message CancelOrderResponse {
+  bool success = 1;
+  string reject_reason = 2;
+}
+
+message OrderbookRequest {
+  string instrument_id = 1;
+  int32 depth = 2;  // Number of levels to return
+}
+
+message LevelInfo {
+  double price = 1;
+  int64 quantity = 2;
+  int32 order_count = 3;
+  double total_value = 4;  // price * quantity
+}
+
+message OrderbookResponse {
+  string instrument_id = 1;
+  int64 timestamp = 2;
+  repeated LevelInfo bids = 3;
+  repeated LevelInfo asks = 4;
+  double last_trade_price = 5;
+  int64 last_trade_quantity = 6;
+  double daily_volume = 7;
+  double daily_turnover = 8;
+}
